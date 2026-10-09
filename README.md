@@ -262,3 +262,42 @@ Copy command 4
 My recommendation: Save this guide in a text file named `START_INSIGHTPILOT.txt` inside your project folder. That way, you can follow the same steps whenever you return to the project.
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+https://insightpilot-ai-analytics.onrender.com
