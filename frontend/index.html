@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InsightPilot - Business Decision Intelligence</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="side" id="side">
+    <div class="brand"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M3 20 L10 11 L15 15 L23 5" fill="none" stroke="#5fd0c5" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23" cy="5" r="2.6" fill="#e6a04a"/></svg><span>InsightPilot</span></div>
+    <nav id="nav"></nav>
+    <div class="side-foot">
+      <div id="ds-chip" class="chip" hidden></div>
+      <button class="ghost" id="theme-btn" type="button">Switch to dark mode</button>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="top"><h1 id="page-title">InsightPilot</h1><div id="top-actions"></div></header>
+    <div id="view" tabindex="-1"></div>
+  </main>
+</div>
+<div id="progress" class="overlay" hidden>
+  <div class="progress-card" role="status" aria-live="polite">
+    <h2>Processing your dataset</h2>
+    <ol id="stages"></ol>
+    <p class="muted" id="progress-note"></p>
+  </div>
+</div>
+<div id="toast" class="toast" hidden></div>
+<script src="vendor/chart.umd.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
