@@ -52,6 +52,9 @@ Open http://localhost:8000 - click **Use Demo Dataset**, or upload `sample_data/
    `AI_PROVIDER`, `AI_MODEL`) in the backend environment. The AI only rewrites calculated findings
    in plain language; the app works fully without it.
 
+   https://insightpilot-ai-analytics.onrender.com
+   
+
 ## Notes and limits
 
 - Sessions live in server memory (last 8 uploads); restarting the server clears them. Max upload 50 MB
