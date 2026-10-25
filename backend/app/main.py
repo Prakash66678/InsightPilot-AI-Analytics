@@ -102,6 +102,52 @@ def overview(s: Session) -> dict:
             "caps": s.caps, "notes": s.notes, "warnings": s.warnings, "log_size": len(s.log)}
 
 
+def build_chat_context(s: Session) -> dict:
+    columns = []
+    for c in s.cleaned.columns:
+        series = s.cleaned[c]
+        item = {"name": str(c), "dtype": str(series.dtype), "non_null": int(series.notna().sum()), "sample_values": []}
+        if series.notna().any():
+            item["sample_values"] = [None if pd.isna(v) else str(v) for v in series.dropna().head(5).astype(str).tolist()]
+        if pd.api.types.is_numeric_dtype(series):
+            vals = series.dropna()
+            if len(vals):
+                item["stats"] = {"min": float(vals.min()), "max": float(vals.max()), "mean": float(vals.mean())}
+        elif pd.api.types.is_datetime64_any_dtype(series):
+            vals = series.dropna()
+            if len(vals):
+                item["stats"] = {"min": str(vals.min().date()), "max": str(vals.max().date())}
+        else:
+            top = series.dropna().astype(str).value_counts().head(5)
+            if len(top):
+                item["top_values"] = [{"value": str(k), "count": int(v)} for k, v in top.items()]
+        columns.append(item)
+
+    evidence = []
+    for k in s.kpis[:10]:
+        label = k.get("label")
+        value = k.get("value")
+        unit = k.get("unit")
+        if label is not None and value is not None:
+            evidence.append(f"{label}: {value} {unit if unit not in ('currency', 'number', 'text', 'days', 'percent', 'percentSimple') else ''}".strip())
+
+    return {
+        "dataset_name": s.filename,
+        "row_count": int(len(s.cleaned)),
+        "column_count": int(len(s.cleaned.columns)),
+        "currency": s.currency or "unknown",
+        "quality_score": s.quality.get("score") if isinstance(s.quality, dict) else None,
+        "roles": s.role_conf,
+        "columns": columns,
+        "kpis": [{"label": k.get("label"), "value": k.get("value"), "unit": k.get("unit")} for k in s.kpis],
+        "insights": [{"title": i.get("title"), "text": i.get("text"), "type": i.get("type")} for i in s.insights],
+        "facts": s.facts,
+        "notes": s.notes,
+        "warnings": s.warnings,
+        "evidence": evidence,
+    }
+
+
 # ----------------------------------------------------------------------------- routes
 @app.get("/api/health")
 def health():
@@ -178,8 +224,19 @@ def report(sid: str):
 def ai_summary(sid: str):
     s = get(sid)
     return J(ai.explain({"kpis": [{k["label"]: k["value"]} for k in s.kpis], "insights": [i["text"] for i in s.insights],
-                         "rca": [c["problem"] + " | " + "; ".join(f["factor"] for f in c["factors"][:4]) for c in s.rca.get("cases", [])],
-                         "recommendations": [r["title"] for r in s.recs]}))
+                        "rca": [c["problem"] + " | " + "; ".join(f["factor"] for f in c["factors"][:4]) for c in s.rca.get("cases", [])],
+                        "recommendations": [r["title"] for r in s.recs]}))
+
+
+@app.post("/api/session/{sid}/chat")
+def ai_chat(sid: str, payload: dict = Body(default={})):
+    s = get(sid)
+    question = str((payload or {}).get("question", "")).strip()
+    if not question:
+        raise HTTPException(400, "Please ask a question about the current dataset.")
+    history = payload.get("history") or []
+    result = ai.answer_question(question, build_chat_context(s), history=history)
+    return J({"answer": result.get("answer"), "message": result.get("message"), "provider": result.get("provider"), "enabled": result.get("enabled"), "evidence": result.get("evidence", [])})
 
 
 def _page(df: pd.DataFrame, q, sort, direction, page, size, flt):
@@ -246,3 +303,4 @@ def download(sid: str, kind: str):
 FRONT = Path(__file__).resolve().parents[2] / "frontend"
 if FRONT.exists():
     app.mount("/", StaticFiles(directory=str(FRONT), html=True), name="frontend")
+
